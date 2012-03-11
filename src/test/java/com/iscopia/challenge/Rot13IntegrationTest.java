@@ -7,7 +7,9 @@ import com.iscopia.challenge.io.FileTransformationOutput;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,20 +23,28 @@ import static org.junit.Assert.assertThat;
  */
 public class Rot13IntegrationTest {
 
+    @Rule
+    public TemporaryFolder directory = new TemporaryFolder();
+
     private static final String EXPECTED_OUTPUT = "Gur qbt onexf ng zvqavtug.";
 
     private Application app = new Application(new Rot13Transformer());
-    private String input = "/sample.txt";
-    private String output = "out.txt";
 
     @Test
-    public void rotatesInputContentAndWritesResultBackToFile() throws URISyntaxException {
-        app.process(new FileContentSource(new File(getClass().getResource(input).toURI())),
-                new FileTransformationOutput(new File(System.getProperty("user.dir"), output)));
+    public void rotatesInputContentAndWritesResultBackToFile() throws Exception {
+        app.process(new FileContentSource(inputFile()), new FileTransformationOutput(outputFile()));
 
-        assertThat(new File(System.getProperty("user.dir"), output), hasContent(EXPECTED_OUTPUT));
+        assertThat(outputFile(), hasContent(EXPECTED_OUTPUT));
     }
-    
+
+    private File outputFile() throws IOException {
+        return directory.newFile("out.txt");
+    }
+
+    private File inputFile() throws URISyntaxException {
+        return new File(getClass().getResource("/sample.txt").toURI());
+    }
+
 
     private Matcher<File> hasContent(final String expectedOutput) {
         return new TypeSafeMatcher<File>() {
