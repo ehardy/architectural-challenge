@@ -11,6 +11,13 @@ import java.nio.charset.Charset;
  * @author ehardy
  */
 public class Application {
+    
+    private final Transformer transformer;
+
+    public Application(Transformer transformer) {
+        this.transformer = transformer;
+    }
+
     public void process(String inputFile, String outputFile) {
         try {
             File input = new File(getClass().getResource(inputFile).toURI());
@@ -24,5 +31,16 @@ public class Application {
             throw new RuntimeException(e);
         }
 
+    }
+
+    public void process(ContentSource source, TransformationOutput output) {
+        String content;
+        
+        while ((content = source.get()) != null) {
+            transformer.transform(content, output);
+        }
+
+        source.close();
+        output.close();
     }
 }

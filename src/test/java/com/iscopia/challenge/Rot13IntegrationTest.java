@@ -1,6 +1,9 @@
 package com.iscopia.challenge;
 
 import com.google.common.io.Files;
+import com.iscopia.challenge.algorithm.Rot13Transformer;
+import com.iscopia.challenge.io.FileContentSource;
+import com.iscopia.challenge.io.FileTransformationOutput;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
@@ -8,6 +11,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 
 import static org.junit.Assert.assertThat;
@@ -17,18 +21,20 @@ import static org.junit.Assert.assertThat;
  */
 public class Rot13IntegrationTest {
 
-    private Application app = new Application();
+    private static final String EXPECTED_OUTPUT = "Gur qbt onexf ng zvqavtug.";
+
+    private Application app = new Application(new Rot13Transformer());
     private String input = "/sample.txt";
     private String output = "out.txt";
-    
-    private String expectedOutput = "The dog barks at midnight.";
 
     @Test
-    public void readsAndWritesSampleFile() {
-        app.process(input, output);
+    public void rotatesInputContentAndWritesResultBackToFile() throws URISyntaxException {
+        app.process(new FileContentSource(new File(getClass().getResource(input).toURI())),
+                new FileTransformationOutput(new File(System.getProperty("user.dir"), output)));
 
-        assertThat(new File(output), hasContent(expectedOutput));
+        assertThat(new File(System.getProperty("user.dir"), output), hasContent(EXPECTED_OUTPUT));
     }
+    
 
     private Matcher<File> hasContent(final String expectedOutput) {
         return new TypeSafeMatcher<File>() {
