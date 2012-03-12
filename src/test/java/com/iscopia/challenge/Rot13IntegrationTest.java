@@ -2,11 +2,15 @@ package com.iscopia.challenge;
 
 import com.google.common.io.Files;
 import com.iscopia.challenge.algorithm.Rot13Transformer;
+import com.iscopia.challenge.io.DelegatingTransformationOutput;
 import com.iscopia.challenge.io.FileContentSource;
 import com.iscopia.challenge.io.FileTransformationOutput;
+import com.iscopia.challenge.io.StringPrintStream;
+import com.iscopia.challenge.ui.ConsoleUI;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -16,6 +20,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -29,12 +35,34 @@ public class Rot13IntegrationTest {
     private static final String EXPECTED_OUTPUT = "Gur qbt onexf ng zvqavtug.";
 
     private Application app = new Application(new Rot13Transformer());
+    private StringPrintStream consoleOutput;
 
     @Test
     public void rotatesInputContentAndWritesResultBackToFile() throws Exception {
-        app.process(new FileContentSource(inputFile()), new FileTransformationOutput(outputFile()));
+        app.process(new FileContentSource(inputFile()), output());
 
         assertThat(outputFile(), hasContent(EXPECTED_OUTPUT));
+    }
+
+    @Test
+    public void writesRotatedContentToConsole() throws Exception {
+        app.process(new FileContentSource(inputFile()), output());
+        
+        assertThat(consoleOutput(), is(equalTo(EXPECTED_OUTPUT)));
+    }
+
+    private TransformationOutput output() throws IOException {
+        return new DelegatingTransformationOutput(new FileTransformationOutput(outputFile()), new ConsoleUI(consoleOutput));
+    }
+
+    @Before
+    public void replaceConsoleOutput() {
+        consoleOutput = new StringPrintStream(System.out);
+        System.setOut(consoleOutput);
+    }
+
+    private String consoleOutput() {
+        return consoleOutput.getPrintedContent();
     }
 
     private File outputFile() throws IOException {
