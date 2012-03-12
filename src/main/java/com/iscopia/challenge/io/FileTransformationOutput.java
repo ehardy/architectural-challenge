@@ -33,6 +33,11 @@ public class FileTransformationOutput implements TransformationOutput {
     }
 
     public void close() {
+        try {
+            writer.flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         Closeables.closeQuietly(writer);
     }
 }
